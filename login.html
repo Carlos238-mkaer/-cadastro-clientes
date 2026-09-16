@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Entrar</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #0d0d0d; color: #eee; display: flex; justify-content: center; padding: 40px 16px; }
+    .card { background: #161616; border: 1px solid #2a2a2a; border-radius: 12px; padding: 32px; width: 100%; max-width: 420px; }
+    h1 { font-size: 20px; margin-bottom: 24px; }
+    label { display: block; font-size: 14px; margin-bottom: 6px; color: #aaa; }
+    input { width: 100%; padding: 10px 12px; margin-bottom: 16px; border-radius: 8px; border: 1px solid #333; background: #0d0d0d; color: #eee; font-size: 14px; box-sizing: border-box; }
+    button { width: 100%; padding: 12px; border-radius: 8px; border: none; background: #7c3aed; color: white; font-weight: 600; cursor: pointer; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    #mensagem { margin-top: 16px; font-size: 14px; text-align: center; }
+    .sucesso { color: #4ade80; }
+    .erro { color: #f87171; }
+    .link { text-align: center; margin-top: 20px; font-size: 14px; }
+    .link a { color: #a78bfa; }
+    #areaLogada { display: none; text-align: center; }
+    #areaLogada button { background: #333; margin-top: 12px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div id="areaDeslogada">
+      <h1>Entrar</h1>
+      <form id="formLogin">
+        <label for="email">Email</label>
+        <input type="email" id="email" required>
+
+        <label for="senha">Senha</label>
+        <input type="password" id="senha" required>
+
+        <button type="submit" id="btnEnviar">Entrar</button>
+      </form>
+      <p id="mensagem"></p>
+      <p class="link">Não tem conta? <a href="criar-conta.html">Criar conta</a></p>
+    </div>
+
+    <div id="areaLogada">
+      <h1 id="saudacao"></h1>
+      <p>Você está logado(a).</p>
+      <button onclick="sair()">Sair</button>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('formLogin');
+    const mensagem = document.getElementById('mensagem');
+    const btnEnviar = document.getElementById('btnEnviar');
+    const areaDeslogada = document.getElementById('areaDeslogada');
+    const areaLogada = document.getElementById('areaLogada');
+
+    // Se já existe um token salvo, mostra a área logada direto.
+    function verificarSessao() {
+      const token = localStorage.getItem('token');
+      const nome = localStorage.getItem('nomeUsuario');
+      if (token && nome) {
+        document.getElementById('saudacao').textContent = `Olá, ${nome}!`;
+        areaDeslogada.style.display = 'none';
+        areaLogada.style.display = 'block';
+      }
+    }
+
+    function sair() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('nomeUsuario');
+      areaLogada.style.display = 'none';
+      areaDeslogada.style.display = 'block';
+    }
+
+    form.addEventListener('submit', async (evento) => {
+      evento.preventDefault();
+      btnEnviar.disabled = true;
+      mensagem.textContent = '';
+      mensagem.className = '';
+
+      const dados = {
+        email: document.getElementById('email').value,
+        senha: document.getElementById('senha').value,
+      };
+
+      try {
+        const resp = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(dados),
+        });
+        const resultado = await resp.json();
+        if (!resp.ok) throw new Error(resultado.erro || 'Erro ao entrar.');
+
+        // Guarda o token no navegador -- é ele que prova, nas próximas
+        // visitas, que esse usuário já fez login.
+        localStorage.setItem('token', resultado.token);
+        localStorage.setItem('nomeUsuario', resultado.usuario.nome);
+
+        verificarSessao();
+      } catch (erro) {
+        mensagem.textContent = erro.message;
+        mensagem.className = 'erro';
+      } finally {
+        btnEnviar.disabled = false;
+      }
+    });
+
+    verificarSessao();
+  </script>
+</body>
+</html>

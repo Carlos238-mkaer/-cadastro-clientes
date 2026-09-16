@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Criar Conta</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #0d0d0d; color: #eee; display: flex; justify-content: center; padding: 40px 16px; }
+    .card { background: #161616; border: 1px solid #2a2a2a; border-radius: 12px; padding: 32px; width: 100%; max-width: 420px; }
+    h1 { font-size: 20px; margin-bottom: 24px; }
+    label { display: block; font-size: 14px; margin-bottom: 6px; color: #aaa; }
+    input { width: 100%; padding: 10px 12px; margin-bottom: 16px; border-radius: 8px; border: 1px solid #333; background: #0d0d0d; color: #eee; font-size: 14px; box-sizing: border-box; }
+    button { width: 100%; padding: 12px; border-radius: 8px; border: none; background: #7c3aed; color: white; font-weight: 600; cursor: pointer; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    #mensagem { margin-top: 16px; font-size: 14px; text-align: center; }
+    .sucesso { color: #4ade80; }
+    .erro { color: #f87171; }
+    .link { text-align: center; margin-top: 20px; font-size: 14px; }
+    .link a { color: #a78bfa; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Criar Conta</h1>
+    <form id="formRegistrar">
+      <label for="nome">Nome</label>
+      <input type="text" id="nome" required>
+
+      <label for="email">Email</label>
+      <input type="email" id="email" required>
+
+      <label for="senha">Senha (mín. 6 caracteres)</label>
+      <input type="password" id="senha" minlength="6" required>
+
+      <button type="submit" id="btnEnviar">Criar conta</button>
+    </form>
+    <p id="mensagem"></p>
+    <p class="link">Já tem conta? <a href="login.html">Entrar</a></p>
+  </div>
+
+  <script>
+    const form = document.getElementById('formRegistrar');
+    const mensagem = document.getElementById('mensagem');
+    const btnEnviar = document.getElementById('btnEnviar');
+
+    form.addEventListener('submit', async (evento) => {
+      evento.preventDefault();
+      btnEnviar.disabled = true;
+      mensagem.textContent = '';
+      mensagem.className = '';
+
+      const dados = {
+        nome: document.getElementById('nome').value,
+        email: document.getElementById('email').value,
+        senha: document.getElementById('senha').value,
+      };
+
+      try {
+        const resp = await fetch('/api/registrar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(dados),
+        });
+        const resultado = await resp.json();
+        if (!resp.ok) throw new Error(resultado.erro || 'Erro ao criar conta.');
+
+        mensagem.textContent = 'Conta criada! Redirecionando para o login...';
+        mensagem.className = 'sucesso';
+        setTimeout(() => (window.location.href = 'login.html'), 1500);
+      } catch (erro) {
+        mensagem.textContent = erro.message;
+        mensagem.className = 'erro';
+        btnEnviar.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
